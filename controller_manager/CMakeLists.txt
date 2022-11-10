@@ -14,6 +14,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
     pluginlib
     rclcpp
     realtime_tools
+    std_msgs
 )
 
 find_package(ament_cmake REQUIRED)
@@ -24,15 +25,35 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
+# components
+
+add_library(state_publisher SHARED
+  src/controller_manager_components/state_publisher.cpp)
+
+target_include_directories(
+  state_publisher
+  PUBLIC
+  include)
+
+ament_target_dependencies(state_publisher ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+target_compile_definitions(state_publisher
+  PRIVATE "COMPOSITION_BUILDING_DLL")
+  
+rclcpp_components_register_nodes(state_publisher "controller_manager_components::StatePublisher")
+
+set(node_plugins "${node_plugins}controller_manager_components::StatePublisher;$<TARGET_FILE:state_publisher>\n")
+
 add_library(${PROJECT_NAME} SHARED
   src/controller_manager.cpp
 )
+
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 ament_target_dependencies(${PROJECT_NAME} ${THIS_PACKAGE_INCLUDE_DEPENDS})
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "CONTROLLER_MANAGER_BUILDING_DLL")
-
+target_link_libraries(${PROJECT_NAME} state_publisher)
 add_executable(ros2_control_node src/ros2_control_node.cpp)
 target_include_directories(ros2_control_node PRIVATE include)
 target_link_libraries(ros2_control_node
@@ -41,6 +62,7 @@ target_link_libraries(ros2_control_node
 ament_target_dependencies(ros2_control_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 install(TARGETS ${PROJECT_NAME}
+  state_publisher
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

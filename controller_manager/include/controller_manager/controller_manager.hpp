@@ -67,13 +67,15 @@ public:
     std::unique_ptr<hardware_interface::ResourceManager> resource_manager,
     std::shared_ptr<rclcpp::Executor> executor,
     const std::string & manager_node_name = "controller_manager",
-    const std::string & namespace_ = "");
+    const std::string & namespace_ = "",
+    const bool & is_distributed = false);
 
   CONTROLLER_MANAGER_PUBLIC
   ControllerManager(
     std::shared_ptr<rclcpp::Executor> executor,
     const std::string & manager_node_name = "controller_manager",
-    const std::string & namespace_ = "");
+    const std::string & namespace_ = "",
+    const bool & is_distributed = false);
 
   CONTROLLER_MANAGER_PUBLIC
   virtual ~ControllerManager() = default;
@@ -189,6 +191,9 @@ public:
 protected:
   CONTROLLER_MANAGER_PUBLIC
   void init_services();
+
+  CONTROLLER_MANAGER_PUBLIC
+  void create_hardware_state_publisher();
 
   CONTROLLER_MANAGER_PUBLIC
   controller_interface::ControllerInterfaceBaseSharedPtr add_controller_impl(
@@ -394,6 +399,9 @@ private:
    * real-time requirements, for example, service callbacks.
    */
   rclcpp::CallbackGroup::SharedPtr best_effort_callback_group_;
+
+  rclcpp::CallbackGroup::SharedPtr components_callback_group_;
+  const bool is_distributed_;
 
   /**
    * The RTControllerListWrapper class wraps a double-buffered list of controllers
