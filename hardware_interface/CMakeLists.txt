@@ -9,6 +9,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
     control_msgs
     lifecycle_msgs
     pluginlib
+    rclcpp
     rclcpp_lifecycle
     rcpputils
     rcutils
@@ -26,6 +27,7 @@ add_library(
   SHARED
   src/actuator.cpp
   src/component_parser.cpp
+  src/hardware_interface/distributed_control_interface/state_publisher.cpp
   src/resource_manager.cpp
   src/sensor.cpp
   src/system.cpp

@@ -13,9 +13,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
     hardware_interface
     pluginlib
     rclcpp
-    rclcpp_lifecycle
     realtime_tools
-    std_msgs
 )
 
 find_package(ament_cmake REQUIRED)
@@ -27,7 +25,6 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
 endforeach()
 
 add_library(${PROJECT_NAME} SHARED
-  src/distributed_control/state_publisher.cpp
   src/controller_manager.cpp
 )
 
