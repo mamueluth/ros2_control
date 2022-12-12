@@ -15,6 +15,7 @@
 #ifndef HARDWARE_INTERFACE__SYSTEM_HPP_
 #define HARDWARE_INTERFACE__SYSTEM_HPP_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -22,6 +23,8 @@
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
+#include "hardware_interface/loaned_command_interface.hpp"
+#include "hardware_interface/loaned_state_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/visibility_control.h"
 #include "rclcpp/duration.hpp"
@@ -64,10 +67,21 @@ public:
   const rclcpp_lifecycle::State & error();
 
   HARDWARE_INTERFACE_PUBLIC
-  std::vector<StateInterface> export_state_interfaces();
+  std::vector<std::string> export_state_interfaces();
 
   HARDWARE_INTERFACE_PUBLIC
-  std::vector<CommandInterface> export_command_interfaces();
+  std::vector<std::string> export_command_interfaces();
+
+  // functionality for claiming (creation) and release of loans
+  // need to be passed to implementation specific interface and handled there
+  // not very clean, don't like this
+  HARDWARE_INTERFACE_PUBLIC
+  LoanedStateInterface claim_state_interfaces(const std::string & state_interface);
+
+  HARDWARE_INTERFACE_PUBLIC
+  LoanedCommandInterface claim_command_interfaces(const std::string & command_interface);
+
+  // release stuff
 
   HARDWARE_INTERFACE_PUBLIC
   return_type prepare_command_mode_switch(

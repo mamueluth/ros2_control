@@ -15,6 +15,7 @@
 #ifndef HARDWARE_INTERFACE__SYSTEM_INTERFACE_HPP_
 #define HARDWARE_INTERFACE__SYSTEM_INTERFACE_HPP_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -99,27 +100,23 @@ public:
     return CallbackReturn::SUCCESS;
   };
 
-  /// Exports all state interfaces for this hardware interface.
   /**
-   * The state interfaces have to be created and transferred according
-   * to the hardware info passed in for the configuration.
-   *
-   * Note the ownership over the state interfaces is transferred to the caller.
-   *
-   * \return vector of state interfaces
+   * @brief Only export information describing the interfaces. Handle construction
+   * and management internally. No need for the user to initialize and manage shared memory.
+   * 
+   * @return std::vector<InterfaceConfiguration> A vector containing all the information 
+   *  needed to create the interfaces exported by the hardware.
    */
-  virtual std::vector<StateInterface> export_state_interfaces() = 0;
+  virtual std::vector<InterfaceDescription> export_state_interfaces_descriptions() = 0;
 
-  /// Exports all command interfaces for this hardware interface.
   /**
-   * The command interfaces have to be created and transferred according
-   * to the hardware info passed in for the configuration.
-   *
-   * Note the ownership over the state interfaces is transferred to the caller.
-   *
-   * \return vector of command interfaces
+   * @brief Only export information describing the interfaces. Handle construction
+   * and management internally. No need for the user to initialize and manage shared memory.
+   * 
+   * @return std::vector<InterfaceConfiguration> A vector containing all the information 
+   *  needed to create the interfaces exported by the hardware.
    */
-  virtual std::vector<CommandInterface> export_command_interfaces() = 0;
+  virtual std::vector<InterfaceDescription> export_command_interfaces_descriptions() = 0;
 
   /// Prepare for a new command interface switch.
   /**
@@ -158,6 +155,25 @@ public:
     const std::vector<std::string> & /*stop_interfaces*/)
   {
     return return_type::OK;
+  }
+
+  // make calls to interfaces explicit and no need to expose them to hardware.
+  void set_state_interface_state(const std::string & interface_name, const double & value)
+  {
+    // log(interfaces_.size()) :( but can be optimized to O(1) lookup
+    state_interfaces_.at(interface_name).hw_set_state(value);
+  }
+
+  void set_command_interface_state(const std::string & interface_name, const double & value)
+  {
+    // log(interfaces_.size()) :( but can be optimized to O(1) lookup
+    command_interfaces_.at(interface_name).hw_set_state(value);
+  }
+
+  double get_command(const std::string & command_interface_name)
+  {
+    // log(command_interfaces_.size()) :( but can be optimized to O(1) lookup
+    return command_interfaces_.at(command_interface_name).hw_get_state();
   }
 
   /// Read the current state values from the actuator.
@@ -201,10 +217,56 @@ public:
    */
   void set_state(const rclcpp_lifecycle::State & new_state) { lifecycle_state_ = new_state; }
 
+  std::string add_state_interface(StateInterface & state_interface)
+  {
+    std::string key = state_interface.get_name();
+    const auto [it, success] =
+      state_interfaces_.emplace(std::make_pair(key, std::move(state_interface)));
+    if (!success)
+    {
+      std::string msg(
+        "Tried to insert StateInterface with already existing key. Insert[" + key + "]");
+      throw std::runtime_error(msg);
+    }
+    return key;
+  }
+
+  std::string add_command_interface(CommandInterface & command_interface)
+  {
+    std::string key = command_interface.get_name();
+    const auto [it, success] =
+      command_interfaces_.emplace(std::make_pair(key, std::move(command_interface)));
+    if (!success)
+    {
+      std::string msg(
+        "Tried to insert StateInterface with already existing key. Insert[" + key + "]");
+      throw std::runtime_error(msg);
+    }
+    return key;
+  }
+
+  LoanedStateInterface claim_state_interfaces(const std::string & state_interface)
+  {
+    //lock
+    //get interface
+    //lookup if claimed
+    //create and return
+  }
+
+  LoanedCommandInterface claim_command_interfaces(const std::string & command_interface)
+  {
+    //lock
+    //get interface
+    //lookup if claimed
+    //create and return
+  }
+
 protected:
   HardwareInfo info_;
   rclcpp_lifecycle::State lifecycle_state_;
-};
+  std::map<std::string, hardware_interface::StateInterface> state_interfaces_;
+  std::map<std::string, hardware_interface::CommandInterface> command_interfaces_;
+};  // namespace hardware_interface
 
 }  // namespace hardware_interface
 #endif  // HARDWARE_INTERFACE__SYSTEM_INTERFACE_HPP_

@@ -412,6 +412,8 @@ public:
   template <class HardwareT>
   void import_state_interfaces(HardwareT & hardware)
   {
+    // problem: need to know which state_interface belongs to which system
+    // only get keys and store them if want to claim as system
     auto interfaces = hardware.export_state_interfaces();
     std::vector<std::string> interface_names;
     interface_names.reserve(interfaces.size());

@@ -184,14 +184,40 @@ const rclcpp_lifecycle::State & System::error()
   return impl_->get_state();
 }
 
-std::vector<StateInterface> System::export_state_interfaces()
+std::vector<std::string> System::export_state_interfaces()
 {
-  return impl_->export_state_interfaces();
+  const auto state_interface_description = impl_->export_state_interfaces_descriptions();
+  std::vector<std::string> state_interfaces;
+  for (const auto & interface_description : state_interface_description)
+  {
+    StateInterface state_interface(interface_description);
+    state_interfaces.push_back(impl_->add_state_interface(state_interface));
+  }
+  return state_interfaces;
 }
 
-std::vector<CommandInterface> System::export_command_interfaces()
+std::vector<std::string> System::export_command_interfaces()
 {
-  return impl_->export_command_interfaces();
+  const auto command_interface_description = impl_->export_command_interfaces_descriptions();
+  std::vector<std::string> command_interfaces;
+  for (const auto & interface_description : command_interface_description)
+  {
+    CommandInterface command_interface(interface_description);
+    command_interfaces.push_back(impl_->add_command_interface(command_interface));
+  }
+  return command_interfaces;
+}
+// problem: functionality for claiming (creation) and release of loans
+// need to be passed to implementation specific interface and HANDLED there
+// not very clean, don't like this
+LoanedStateInterface System::claim_state_interfaces(const std::string & state_interface)
+{
+  return impl_->claim_state_interface(state_interface);
+}
+
+LoanedCommandInterface System::claim_command_interfaces(const std::string & command_interface)
+{
+  return impl_->claim_command_interface(command_interface);
 }
 
 return_type System::prepare_command_mode_switch(
